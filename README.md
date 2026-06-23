@@ -184,3 +184,12 @@ If you encounter any issues:
 
 **Created**: June 2026
 **Version**: 1.0
+
+## GitHub Pages
+
+This repository includes a GitHub Pages site served from the `docs/` folder.
+
+- Site URL: `https://saipratapbillu.github.io/Agent-for-Data-Conversion/`
+- Local site files: `docs/index.html`, `docs/styles.css`
+
+> To publish the site, ensure GitHub Pages is configured for the `docs/` folder under the `master` branch in repository settings.
