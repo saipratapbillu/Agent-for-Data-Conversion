@@ -197,3 +197,31 @@ button:hover {
   background: #1f2937;
   color: white;
 }
+
+.file-summary {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-top: 10px;
+}
+
+.file-summary-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.file-summary ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0;
+  color: #475569;
+  max-height: 170px;
+  overflow-y: auto;
+}
+
+.file-summary li {
+  margin-bottom: 4px;
+}

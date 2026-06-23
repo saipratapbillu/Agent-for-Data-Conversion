@@ -30,6 +30,10 @@
             <input id="sourcePath" type="text" placeholder="Select source folder..." readonly />
             <label class="btn btn-secondary" for="sourcePicker">Browse</label>
           </div>
+          <div class="file-summary" id="sourceSummary">
+            <div class="file-summary-title">No source files selected.</div>
+            <ul id="sourceFilesList"></ul>
+          </div>
         </div>
 
         <div class="field-group">
@@ -37,6 +41,10 @@
           <div class="input-row">
             <input id="destinationPath" type="text" placeholder="Select destination folder..." readonly />
             <label class="btn btn-secondary" for="destinationPicker">Browse</label>
+          </div>
+          <div class="file-summary" id="destinationSummary">
+            <div class="file-summary-title">No destination files selected.</div>
+            <ul id="destinationFilesList"></ul>
           </div>
         </div>
 
@@ -85,17 +93,46 @@
     const sourcePicker = document.getElementById('sourcePicker');
     const destinationPicker = document.getElementById('destinationPicker');
 
+    const sourceSummary = document.getElementById('sourceSummary');
+    const destinationSummary = document.getElementById('destinationSummary');
+    const sourceFilesList = document.getElementById('sourceFilesList');
+    const destinationFilesList = document.getElementById('destinationFilesList');
+
+    function renderFileSummary(rootPath, files, summaryElement, listElement, label) {
+      if (!files.length) {
+        summaryElement.querySelector('.file-summary-title').textContent = `No ${label} files selected.`;
+        listElement.innerHTML = '';
+        return;
+      }
+
+      summaryElement.querySelector('.file-summary-title').textContent = `${files.length} ${label} file${files.length === 1 ? '' : 's'} selected in ${rootPath}`;
+      const items = files.slice(0, 20).map((file) => `<li>${file}</li>`).join('');
+      listElement.innerHTML = items + (files.length > 20 ? '<li>…and more</li>' : '');
+    }
+
     sourcePicker.addEventListener('change', () => {
-      if (sourcePicker.files.length) {
-        const file = sourcePicker.files[0];
-        sourcePathInput.value = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : file.name;
+      const files = Array.from(sourcePicker.files);
+      if (files.length) {
+        const root = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : files[0].name;
+        sourcePathInput.value = root;
+        const names = files.map((file) => file.webkitRelativePath || file.name);
+        renderFileSummary(root, names, sourceSummary, sourceFilesList, 'source');
+      } else {
+        sourcePathInput.value = '';
+        renderFileSummary('', [], sourceSummary, sourceFilesList, 'source');
       }
     });
 
     destinationPicker.addEventListener('change', () => {
-      if (destinationPicker.files.length) {
-        const file = destinationPicker.files[0];
-        destinationPathInput.value = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : file.name;
+      const files = Array.from(destinationPicker.files);
+      if (files.length) {
+        const root = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : files[0].name;
+        destinationPathInput.value = root;
+        const names = files.map((file) => file.webkitRelativePath || file.name);
+        renderFileSummary(root, names, destinationSummary, destinationFilesList, 'destination');
+      } else {
+        destinationPathInput.value = '';
+        renderFileSummary('', [], destinationSummary, destinationFilesList, 'destination');
       }
     });
   </script>
