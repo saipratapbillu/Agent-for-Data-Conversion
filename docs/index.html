@@ -71,11 +71,36 @@
         </div>
       </section>
     </main>
+    <input type="file" id="sourcePicker" webkitdirectory directory multiple style="display:none" />
+    <input type="file" id="destinationPicker" webkitdirectory directory multiple style="display:none" />
 
     <footer class="app-footer">
       <div>Default source path and output path can be configured in the app settings.</div>
       <div>Built for user-friendly file selection and quick downloads.</div>
     </footer>
   </div>
+  <script>
+    const sourcePathInput = document.getElementById('sourcePath');
+    const destinationPathInput = document.getElementById('destinationPath');
+    const sourcePicker = document.getElementById('sourcePicker');
+    const destinationPicker = document.getElementById('destinationPicker');
+
+    document.querySelector('#sourcePath + button').addEventListener('click', () => sourcePicker.click());
+    document.querySelector('#destinationPath + button').addEventListener('click', () => destinationPicker.click());
+
+    sourcePicker.addEventListener('change', () => {
+      if (sourcePicker.files.length) {
+        const relativePath = sourcePicker.files[0].webkitRelativePath || sourcePicker.files[0].name;
+        sourcePathInput.value = relativePath.split('/')[0] || relativePath;
+      }
+    });
+
+    destinationPicker.addEventListener('change', () => {
+      if (destinationPicker.files.length) {
+        const relativePath = destinationPicker.files[0].webkitRelativePath || destinationPicker.files[0].name;
+        destinationPathInput.value = relativePath.split('/')[0] || relativePath;
+      }
+    });
+  </script>
 </body>
 </html>
