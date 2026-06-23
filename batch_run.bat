@@ -5,41 +5,41 @@ REM Converts all Excel files from network path to CSV
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
-echo.
-echo ========================================
-echo Batch Excel to CSV Converter
-echo ========================================
-echo.
+echo off
+REM Batch Excel to CSV Converter - Windows Launcher
+REM Opens the GUI to select source and destination folders, then convert Excel files to CSV.
 
-REM Define paths
-set EXCEL_SOURCE=\\10.210.32.5\IGS\SINYAR\HSES\PowerBIReports
-set CSV_OUTPUT=C:\Users\VemanasaiPratapBillu\OneDrive - Unify Group\Desktop\HSE CSV Files\CSV
+setlocal enabledelayedexpansion
+cd /d "%~dp0"
+
 set SCRIPT_DIR=%~dp0
 set VENV_PYTHON=%SCRIPT_DIR%\.venv\Scripts\python.exe
 
-REM Check if virtual environment exists
 if not exist "%VENV_PYTHON%" (
-    echo Error: Virtual environment not found
+    echo Error: Virtual environment not found.
     echo Run: python -m venv .venv
     pause
     exit /b 1
 )
 
-echo Source Directory: %EXCEL_SOURCE%
-echo Output Directory: %CSV_OUTPUT%
+echo.
+echo ========================================
+echo Excel to CSV Converter - GUI Launcher
+echo ========================================
 echo.
 
-REM Run batch converter using virtual environment Python
-"%VENV_PYTHON%" batch_convert.py "%EXCEL_SOURCE%" "%CSV_OUTPUT%"
+echo Launching the UI application...
+
+"%VENV_PYTHON%" main.py
 
 if errorlevel 1 (
     echo.
-    echo ❌ Batch conversion encountered errors!
+    echo ❌ Application exited with an error.
     pause
     exit /b 1
 ) else (
     echo.
-    echo ✅ Batch conversion completed successfully!
+    echo ✅ Application closed.
     pause
     exit /b 0
 )

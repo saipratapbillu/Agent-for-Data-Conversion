@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel to CSV Batch Converter</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">📄</span>
+        <div>
+          <h1>Excel to CSV Batch Converter</h1>
+          <p>Upload Excel sources, choose a destination, and download converted CSV files.</p>
+        </div>
+      </div>
+      <div class="status-pill status-ready">Ready to convert</div>
+    </header>
+
+    <main class="content">
+      <section class="panel panel-primary">
+        <h2>1. Select Paths</h2>
+        <p>Choose the source folder containing Excel files and the destination folder for CSV output.</p>
+
+        <div class="field-group">
+          <label for="sourcePath">Source Folder</label>
+          <div class="input-row">
+            <input id="sourcePath" type="text" placeholder="Select source folder..." readonly />
+            <button class="btn btn-secondary">Browse</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="destinationPath">Destination Folder</label>
+          <div class="input-row">
+            <input id="destinationPath" type="text" placeholder="Select destination folder..." readonly />
+            <button class="btn btn-secondary">Browse</button>
+          </div>
+        </div>
+
+        <div class="field-group inline-group">
+          <label for="sheetName">Sheet Name</label>
+          <input id="sheetName" type="text" placeholder="Optional — defaults to first sheet" />
+        </div>
+
+        <div class="field-group inline-group checkbox-group">
+          <input id="keepExisting" type="checkbox" />
+          <label for="keepExisting">Keep existing CSV files in output folder</label>
+        </div>
+      </section>
+
+      <section class="panel panel-secondary">
+        <h2>2. Convert Files</h2>
+        <p>When you're ready, run batch conversion. The app will keep track of progress and results.</p>
+
+        <div class="button-row">
+          <button class="btn btn-primary btn-large">Convert Now</button>
+          <button class="btn btn-outline">Open Output</button>
+        </div>
+      </section>
+
+      <section class="panel panel-info">
+        <h2>Conversion Log</h2>
+        <div class="log-panel">
+          <p class="log-note">Status updates appear here after conversion starts.</p>
+          <div class="log-lines" id="logLines">
+            <div class="log-line">No activity yet.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div>Default source path and output path can be configured in the app settings.</div>
+      <div>Built for user-friendly file selection and quick downloads.</div>
+    </footer>
+  </div>
+</body>
+</html>

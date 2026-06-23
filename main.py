@@ -1,311 +1,396 @@
 #!/usr/bin/env python3
 """
 Excel to CSV Converter Agent
-Converts Excel files to CSV format with a user-friendly GUI
-Enhanced with service account authentication and auto-save
+Converts all Excel files to CSV format with a user-friendly folder selection UI.
 """
 
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import pandas as pd
-import os
 from pathlib import Path
 from datetime import datetime
+from config import (
+    EXCEL_SOURCE_PATH,
+    DEFAULT_OUTPUT_PATH,
+    SERVICE_ACCOUNT_KEY_PATH,
+    AUTO_SAVE_ENABLED,
+    CREATE_LOG_FILE,
+)
 
 
 class ExcelToCSVAgent:
-    def __init__(self, root, default_path=None, service_account_key=None):
+    def __init__(self, root, default_source=None, default_destination=None, service_account_key=None):
         self.root = root
-        self.root.title("Excel to CSV Converter Agent - Enhanced")
-        self.root.geometry("700x500")
+        self.root.title("Excel to CSV Converter Agent")
+        self.root.geometry("760x560")
         self.root.resizable(False, False)
-        
-        # Configure style
+
         self.root.configure(bg="#f0f0f0")
-        
-        # Configuration
-        self.default_path = default_path or str(Path.home() / "Desktop")
-        self.service_account_key = service_account_key
-        self.is_authenticated = service_account_key is not None
-        
-        # Selected file path
-        self.selected_file = None
-        self.auto_save_enabled = True
-        self.output_folder = self.default_path
-        
+
+        self.default_source = default_source or EXCEL_SOURCE_PATH or str(Path.home())
+        self.default_destination = default_destination or DEFAULT_OUTPUT_PATH or str(Path.home())
+        self.service_account_key = service_account_key or SERVICE_ACCOUNT_KEY_PATH
+        self.is_authenticated = self.service_account_key is not None
+
+        self.source_folder = self.default_source
+        self.destination_folder = self.default_destination
+        self.sheet_name = None
+        self.create_log = CREATE_LOG_FILE
+
         self.setup_ui()
-    
+
     def setup_ui(self):
-        """Setup the user interface"""
-        # Title
         title_label = tk.Label(
             self.root,
-            text="Excel to CSV Converter - Enhanced",
-            font=("Arial", 18, "bold"),
+            text="Excel to CSV Batch Converter",
+            font=("Segoe UI", 20, "bold"),
             bg="#f0f0f0",
-            fg="#333"
+            fg="#2c3e50",
         )
-        title_label.pack(pady=15)
-        
-        # Authentication status
-        auth_status = "✓ Authenticated (Service Account)" if self.is_authenticated else "⚠ Not Authenticated"
-        auth_color = "#4CAF50" if self.is_authenticated else "#FF9800"
-        auth_label = tk.Label(
+        title_label.pack(pady=(15, 5))
+
+        subtitle_label = tk.Label(
             self.root,
-            text=f"Status: {auth_status}",
-            font=("Arial", 9),
+            text="Select source and destination paths, then convert your Excel files to CSV.",
+            font=("Segoe UI", 10),
             bg="#f0f0f0",
-            fg=auth_color
+            fg="#4d4d4d",
         )
-        auth_label.pack()
-        
-        # Default path frame
-        path_frame = tk.Frame(self.root, bg="#ffffff", relief=tk.RIDGE, bd=2)
-        path_frame.pack(padx=15, pady=5, fill=tk.X)
-        
-        path_label = tk.Label(
-            path_frame,
-            text="Default Output Path:",
-            font=("Arial", 10),
-            bg="#ffffff"
+        subtitle_label.pack(pady=(0, 15))
+
+        status_text = "Authenticated" if self.is_authenticated else "Not authenticated"
+        status_color = "#2e7d32" if self.is_authenticated else "#f57c00"
+        status_frame = tk.Frame(self.root, bg="#ffffff", relief=tk.RIDGE, bd=2)
+        status_frame.pack(padx=18, pady=5, fill=tk.X)
+
+        tk.Label(
+            status_frame,
+            text=f"Service Account: {status_text}",
+            font=("Segoe UI", 10, "bold"),
+            bg="#ffffff",
+            fg=status_color,
+        ).pack(anchor="w", padx=12, pady=10)
+
+        form_frame = tk.Frame(self.root, bg="#ffffff", relief=tk.RIDGE, bd=2)
+        form_frame.pack(padx=18, pady=10, fill=tk.X)
+
+        tk.Label(
+            form_frame,
+            text="Source Folder:",
+            font=("Segoe UI", 10),
+            bg="#ffffff",
+        ).grid(row=0, column=0, sticky="w", padx=12, pady=(12, 4))
+
+        self.source_display = tk.Label(
+            form_frame,
+            text=self.source_folder,
+            font=("Segoe UI", 9),
+            bg="#f7f7f7",
+            fg="#4d4d4d",
+            wraplength=610,
+            justify="left",
+            anchor="w",
+            relief=tk.SUNKEN,
+            bd=1,
+            padx=6,
+            pady=6,
         )
-        path_label.pack(anchor="w", padx=10, pady=(8, 3))
-        
-        path_display = tk.Label(
-            path_frame,
-            text=self.default_path,
-            font=("Arial", 9),
-            bg="#f9f9f9",
-            fg="#666",
-            wraplength=600,
-            justify="left"
+        self.source_display.grid(row=1, column=0, columnspan=2, sticky="ew", padx=12)
+
+        tk.Button(
+            form_frame,
+            text="Browse Source",
+            command=self.select_source_folder,
+            font=("Segoe UI", 10),
+            bg="#1565c0",
+            fg="white",
+            activebackground="#0d47a1",
+            padx=10,
+            pady=6,
+            relief=tk.RAISED,
+            bd=2,
+        ).grid(row=1, column=2, sticky="e", padx=12)
+
+        tk.Label(
+            form_frame,
+            text="Destination Folder:",
+            font=("Segoe UI", 10),
+            bg="#ffffff",
+        ).grid(row=2, column=0, sticky="w", padx=12, pady=(12, 4))
+
+        self.destination_display = tk.Label(
+            form_frame,
+            text=self.destination_folder,
+            font=("Segoe UI", 9),
+            bg="#f7f7f7",
+            fg="#4d4d4d",
+            wraplength=610,
+            justify="left",
+            anchor="w",
+            relief=tk.SUNKEN,
+            bd=1,
+            padx=6,
+            pady=6,
         )
-        path_display.pack(anchor="w", padx=10, pady=3, fill=tk.X)
-        
-        # File selection frame
-        file_frame = tk.Frame(self.root, bg="#ffffff", relief=tk.RIDGE, bd=2)
-        file_frame.pack(padx=15, pady=5, fill=tk.BOTH, expand=True)
-        
-        file_label = tk.Label(
-            file_frame,
-            text="Selected File:",
-            font=("Arial", 11),
-            bg="#ffffff"
-        )
-        file_label.pack(anchor="w", padx=10, pady=(10, 5))
-        
-        self.file_display = tk.Label(
-            file_frame,
-            text="No file selected",
-            font=("Arial", 9),
-            bg="#f9f9f9",
-            fg="#666",
-            wraplength=600,
-            justify="left"
-        )
-        self.file_display.pack(anchor="w", padx=10, pady=5, fill=tk.BOTH, expand=True)
-        
-        # Sheet name and options frame
-        options_frame = tk.Frame(self.root, bg="#ffffff", relief=tk.RIDGE, bd=2)
-        options_frame.pack(padx=15, pady=5, fill=tk.X)
-        
-        sheet_label = tk.Label(
-            options_frame,
-            text="Sheet Name (optional - defaults to first sheet):",
-            font=("Arial", 10),
-            bg="#ffffff"
-        )
-        sheet_label.pack(anchor="w", padx=10, pady=(8, 3))
-        
-        self.sheet_entry = tk.Entry(options_frame, font=("Arial", 9))
-        self.sheet_entry.pack(padx=10, pady=3, fill=tk.X)
-        
-        # Auto-save checkbox
-        self.auto_save_var = tk.BooleanVar(value=True)
+        self.destination_display.grid(row=3, column=0, columnspan=2, sticky="ew", padx=12)
+
+        tk.Button(
+            form_frame,
+            text="Browse Destination",
+            command=self.select_destination_folder,
+            font=("Segoe UI", 10),
+            bg="#2e7d32",
+            fg="white",
+            activebackground="#1b5e20",
+            padx=10,
+            pady=6,
+            relief=tk.RAISED,
+            bd=2,
+        ).grid(row=3, column=2, sticky="e", padx=12)
+
+        tk.Label(
+            form_frame,
+            text="Optional sheet name (leave empty for first sheet):",
+            font=("Segoe UI", 10),
+            bg="#ffffff",
+        ).grid(row=4, column=0, sticky="w", padx=12, pady=(12, 4))
+
+        self.sheet_entry = tk.Entry(form_frame, font=("Segoe UI", 10), bd=1, relief=tk.SUNKEN)
+        self.sheet_entry.grid(row=5, column=0, columnspan=3, sticky="ew", padx=12, pady=(0, 12))
+
+        self.auto_save_var = tk.BooleanVar(value=AUTO_SAVE_ENABLED)
+        self.auto_save_var.set(AUTO_SAVE_ENABLED)
         auto_save_check = tk.Checkbutton(
-            options_frame,
-            text="✓ Auto-save CSV (same name as Excel file)",
-            font=("Arial", 9),
+            form_frame,
+            text="Keep existing CSV files in destination folder",
+            font=("Segoe UI", 10),
             bg="#ffffff",
             variable=self.auto_save_var,
-            command=self.toggle_auto_save
+            onvalue=False,
+            offvalue=True,
+            command=self.update_save_option,
         )
-        auto_save_check.pack(anchor="w", padx=10, pady=(5, 8))
-        
-        # Button frame
-        button_frame = tk.Frame(self.root, bg="#f0f0f0")
-        button_frame.pack(pady=12)
-        
-        select_btn = tk.Button(
-            button_frame,
-            text="📂 Select File",
-            command=self.select_file,
-            font=("Arial", 10, "bold"),
-            bg="#4CAF50",
-            fg="white",
-            padx=12,
-            pady=8,
-            cursor="hand2",
-            relief=tk.RAISED,
-            bd=2
+        auto_save_check.grid(row=6, column=0, columnspan=3, sticky="w", padx=12, pady=(0, 12))
+
+        self.result_box = tk.Text(
+            self.root,
+            height=12,
+            font=("Segoe UI", 10),
+            bg="#ffffff",
+            fg="#333",
+            bd=2,
+            relief=tk.SUNKEN,
+            wrap=tk.WORD,
         )
-        select_btn.pack(side=tk.LEFT, padx=8)
-        
+        self.result_box.pack(padx=18, pady=(0, 8), fill=tk.BOTH, expand=True)
+        self.result_box.configure(state=tk.DISABLED)
+
+        footer_frame = tk.Frame(self.root, bg="#f0f0f0")
+        footer_frame.pack(padx=18, pady=(0, 10), fill=tk.X)
+
         convert_btn = tk.Button(
-            button_frame,
-            text="⚙️ Convert to CSV",
-            command=self.convert_to_csv,
-            font=("Arial", 10, "bold"),
-            bg="#2196F3",
+            footer_frame,
+            text="Convert Source Folder",
+            command=self.convert_folder,
+            font=("Segoe UI", 11, "bold"),
+            bg="#1976d2",
             fg="white",
-            padx=12,
-            pady=8,
-            cursor="hand2",
+            padx=16,
+            pady=10,
             relief=tk.RAISED,
-            bd=2
+            bd=2,
         )
-        convert_btn.pack(side=tk.LEFT, padx=8)
-        
-        # Status bar
+        convert_btn.pack(side=tk.LEFT, padx=(0, 12))
+
+        self.open_folder_btn = tk.Button(
+            footer_frame,
+            text="Open Output Folder",
+            command=self.open_output_folder,
+            font=("Segoe UI", 11, "bold"),
+            bg="#388e3c",
+            fg="white",
+            padx=14,
+            pady=10,
+            relief=tk.RAISED,
+            bd=2,
+            state=tk.DISABLED,
+        )
+        self.open_folder_btn.pack(side=tk.LEFT)
+
         self.status_label = tk.Label(
             self.root,
-            text="Ready",
-            font=("Arial", 9),
+            text="Ready to convert. Use the default paths or select new folders.",
+            font=("Segoe UI", 9),
             bg="#e0e0e0",
-            fg="#333",
+            fg="#111",
             anchor="w",
             padx=10,
-            pady=5
+            pady=6,
         )
         self.status_label.pack(fill=tk.X, side=tk.BOTTOM)
-    
-    def toggle_auto_save(self):
-        """Toggle auto-save feature"""
-        self.auto_save_enabled = self.auto_save_var.get()
-        status = "enabled" if self.auto_save_enabled else "disabled"
-        self.status_label.config(text=f"Auto-save {status}")
-    
-    def select_file(self):
-        """Open file dialog to select Excel file"""
-        file_path = filedialog.askopenfilename(
-            title="Select an Excel file",
-            initialdir=self.default_path,
-            filetypes=[
-                ("Excel files", "*.xlsx *.xls"),
-                ("All files", "*.*")
-            ]
+
+    def update_save_option(self):
+        self.delete_existing = not self.auto_save_var.get()
+        self.status_label.config(text="Conversion option updated.")
+
+    def select_source_folder(self):
+        selected = filedialog.askdirectory(
+            title="Select source folder containing Excel files",
+            initialdir=self.source_folder,
         )
-        
-        if file_path:
-            self.selected_file = file_path
-            self.file_display.config(text=file_path)
-            filename = os.path.basename(file_path)
-            self.status_label.config(text=f"File selected: {filename}")
-            
-            # Try to list available sheets
-            try:
-                xls = pd.ExcelFile(file_path)
-                sheets = xls.sheet_names
-                sheet_info = f"Available sheets: {', '.join(sheets)}"
-                self.status_label.config(text=sheet_info)
-            except Exception as e:
-                self.status_label.config(text=f"Error reading file: {str(e)}")
-    
-    def convert_to_csv(self):
-        """Convert the selected Excel file to CSV"""
-        if not self.selected_file:
-            messagebox.showwarning("Warning", "Please select an Excel file first!")
+        if selected:
+            self.source_folder = selected
+            self.source_display.config(text=self.source_folder)
+            self.status_label.config(text="Source folder updated.")
+
+    def select_destination_folder(self):
+        selected = filedialog.askdirectory(
+            title="Select destination folder for CSV files",
+            initialdir=self.destination_folder,
+        )
+        if selected:
+            self.destination_folder = selected
+            self.destination_display.config(text=self.destination_folder)
+            self.status_label.config(text="Destination folder updated.")
+
+    def append_result(self, message):
+        self.result_box.configure(state=tk.NORMAL)
+        self.result_box.insert(tk.END, message + "\n")
+        self.result_box.see(tk.END)
+        self.result_box.configure(state=tk.DISABLED)
+
+    def find_excel_files(self):
+        path = Path(self.source_folder)
+        excel_files = []
+        for ext in ['*.xlsx', '*.xls']:
+            excel_files.extend([f for f in path.rglob(ext) if not f.name.startswith('~$')])
+        return sorted(excel_files)
+
+    def delete_existing_csvs(self):
+        output = Path(self.destination_folder)
+        csv_files = list(output.glob('*.csv'))
+        if not csv_files:
+            self.append_result('No existing CSV files found in destination.')
             return
-        
+
+        self.append_result(f'Deleting {len(csv_files)} existing CSV file(s) ...')
+        deleted = 0
+        for csv_file in csv_files:
+            try:
+                csv_file.unlink()
+                deleted += 1
+            except Exception as e:
+                self.append_result(f'  ✖ Failed to delete {csv_file.name}: {e}')
+        self.append_result(f'  ✓ Deleted {deleted} CSV files.')
+
+    def convert_folder(self):
+        self.open_folder_btn.config(state=tk.DISABLED)
+        self.result_box.configure(state=tk.NORMAL)
+        self.result_box.delete(1.0, tk.END)
+        self.result_box.configure(state=tk.DISABLED)
+
+        source = Path(self.source_folder)
+        destination = Path(self.destination_folder)
+
+        if not source.exists():
+            messagebox.showerror("Source Missing", "The selected source folder does not exist.")
+            return
+
+        if not destination.exists():
+            try:
+                destination.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                messagebox.showerror("Destination Error", f"Could not create destination folder:\n{e}")
+                return
+
+        excel_files = self.find_excel_files()
+        if not excel_files:
+            messagebox.showwarning("No Excel Files", "No Excel (.xlsx or .xls) files were found in the source folder.")
+            return
+
+        if self.delete_existing:
+            self.delete_existing_csvs()
+
+        self.append_result(f'Converting {len(excel_files)} Excel file(s) from: {source}')
+        self.append_result(f'Target destination: {destination}')
+        self.append_result('-' * 72)
+
+        failures = 0
+        for idx, excel_file in enumerate(excel_files, start=1):
+            try:
+                sheet_name = self.sheet_entry.get().strip() if self.sheet_entry.get().strip() else 0
+                df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                output_file = destination / f"{excel_file.stem}.csv"
+
+                counter = 1
+                while output_file.exists():
+                    output_file = destination / f"{excel_file.stem}_{counter}.csv"
+                    counter += 1
+
+                df.to_csv(output_file, index=False, encoding='utf-8')
+                self.append_result(f'[{idx}/{len(excel_files)}] ✓ Converted: {excel_file.name}')
+            except Exception as e:
+                failures += 1
+                self.append_result(f'[{idx}/{len(excel_files)}] ✖ Failed: {excel_file.name} ({e})')
+
+        self.append_result('-' * 72)
+        self.append_result(f'Completed with {failures} failure(s).')
+
+        self.log_conversion(source, destination, len(excel_files), failures)
+        self.status_label.config(text="Conversion finished. You may open the output folder.")
+        self.open_folder_btn.config(state=tk.NORMAL)
+
+        messagebox.showinfo(
+            "Conversion Complete",
+            f"Batch conversion finished.\n\nDestination folder:\n{destination}"
+        )
+
+    def open_output_folder(self):
         try:
-            # Get sheet name if specified
-            sheet_name = self.sheet_entry.get().strip() if self.sheet_entry.get().strip() else 0
-            
-            # Read Excel file
-            self.status_label.config(text="Reading Excel file...")
-            self.root.update()
-            
-            df = pd.read_excel(self.selected_file, sheet_name=sheet_name)
-            
-            # Generate output file path (same name as input)
-            input_path = Path(self.selected_file)
-            output_path = input_path.with_suffix('.csv')
-            
-            # If auto-save enabled, always save to default output folder
-            if self.auto_save_enabled and self.output_folder:
-                output_path = Path(self.output_folder) / output_path.name
-            
-            # Check if file already exists and handle duplicates
-            counter = 1
-            original_output = output_path
-            while output_path.exists():
-                output_path = original_output.with_stem(f"{original_output.stem}_{counter}")
-                counter += 1
-            
-            # Create output directory if it doesn't exist
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Write to CSV
-            self.status_label.config(text="Writing CSV file...")
-            self.root.update()
-            
-            df.to_csv(output_path, index=False, encoding='utf-8')
-            
-            # Log the conversion
-            self.log_conversion(self.selected_file, str(output_path), len(df), len(df.columns))
-            
-            self.status_label.config(text="✓ Conversion complete!")
-            messagebox.showinfo(
-                "Success",
-                f"File converted successfully!\n\n"
-                f"Input: {input_path.name}\n"
-                f"Output: {output_path.name}\n\n"
-                f"Location: {output_path}\n\n"
-                f"Data: {len(df)} rows × {len(df.columns)} columns"
-            )
-            
+            os.startfile(self.destination_folder)
         except Exception as e:
-            self.status_label.config(text="❌ Error during conversion")
-            messagebox.showerror("Error", f"Failed to convert file:\n{str(e)}")
-    
-    def log_conversion(self, input_file, output_file, rows, columns):
-        """Log conversion details to a log file"""
-        log_file = Path(self.default_path) / "conversion_log.txt"
+            messagebox.showerror("Open Folder Failed", f"Could not open output folder:\n{e}")
+
+    def log_conversion(self, source, destination, total_files, failures):
+        if not self.create_log:
+            return
+
+        log_file = Path(self.destination_folder) / 'conversion_log.txt'
         try:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log_entry = (
-                f"[{timestamp}] Converted '{os.path.basename(input_file)}' to '{os.path.basename(output_file)}' "
-                f"({rows} rows, {columns} columns)\n"
-            )
-            with open(log_file, "a", encoding='utf-8') as f:
-                f.write(log_entry)
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(
+                    f'[{timestamp}] source={source} destination={destination} total={total_files} failures={failures}\n'
+                )
+            self.append_result(f'Log saved to {log_file}')
         except Exception as e:
-            print(f"Warning: Could not write to log file: {str(e)}")
+            self.append_result(f'Warning: Could not save log file: {e}')
 
 
-def main(default_path=None, service_account_key=None):
-    """Main entry point
-    
-    Args:
-        default_path (str, optional): Default directory for file selection and output
-        service_account_key (str, optional): Path to service account JSON key file
-    """
+def main(default_source=None, default_destination=None, service_account_key=None):
     root = tk.Tk()
-    app = ExcelToCSVAgent(root, default_path=default_path, service_account_key=service_account_key)
+    app = ExcelToCSVAgent(
+        root,
+        default_source=default_source,
+        default_destination=default_destination,
+        service_account_key=service_account_key,
+    )
     root.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
-    
-    # Parse command-line arguments
-    default_path = None
+
+    default_source = None
+    default_destination = None
     service_account_key = None
-    
+
     if len(sys.argv) > 1:
-        default_path = sys.argv[1]
-    
+        default_source = sys.argv[1]
     if len(sys.argv) > 2:
-        service_account_key = sys.argv[2]
-    
-    main(default_path=default_path, service_account_key=service_account_key)
+        default_destination = sys.argv[2]
+    if len(sys.argv) > 3:
+        service_account_key = sys.argv[3]
+
+    main(default_source=default_source, default_destination=default_destination, service_account_key=service_account_key)
