@@ -28,7 +28,7 @@
           <label for="sourcePath">Source Folder</label>
           <div class="input-row">
             <input id="sourcePath" type="text" placeholder="Select source folder..." readonly />
-            <button class="btn btn-secondary">Browse</button>
+            <label class="btn btn-secondary" for="sourcePicker">Browse</label>
           </div>
         </div>
 
@@ -36,7 +36,7 @@
           <label for="destinationPath">Destination Folder</label>
           <div class="input-row">
             <input id="destinationPath" type="text" placeholder="Select destination folder..." readonly />
-            <button class="btn btn-secondary">Browse</button>
+            <label class="btn btn-secondary" for="destinationPicker">Browse</label>
           </div>
         </div>
 
@@ -71,8 +71,8 @@
         </div>
       </section>
     </main>
-    <input type="file" id="sourcePicker" webkitdirectory directory multiple style="display:none" />
-    <input type="file" id="destinationPicker" webkitdirectory directory multiple style="display:none" />
+    <input type="file" id="sourcePicker" webkitdirectory multiple style="width:0;height:0;position:absolute;left:-9999px;opacity:0;" />
+    <input type="file" id="destinationPicker" webkitdirectory multiple style="width:0;height:0;position:absolute;left:-9999px;opacity:0;" />
 
     <footer class="app-footer">
       <div>Default source path and output path can be configured in the app settings.</div>
@@ -85,20 +85,17 @@
     const sourcePicker = document.getElementById('sourcePicker');
     const destinationPicker = document.getElementById('destinationPicker');
 
-    document.querySelector('#sourcePath + button').addEventListener('click', () => sourcePicker.click());
-    document.querySelector('#destinationPath + button').addEventListener('click', () => destinationPicker.click());
-
     sourcePicker.addEventListener('change', () => {
       if (sourcePicker.files.length) {
-        const relativePath = sourcePicker.files[0].webkitRelativePath || sourcePicker.files[0].name;
-        sourcePathInput.value = relativePath.split('/')[0] || relativePath;
+        const file = sourcePicker.files[0];
+        sourcePathInput.value = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : file.name;
       }
     });
 
     destinationPicker.addEventListener('change', () => {
       if (destinationPicker.files.length) {
-        const relativePath = destinationPicker.files[0].webkitRelativePath || destinationPicker.files[0].name;
-        destinationPathInput.value = relativePath.split('/')[0] || relativePath;
+        const file = destinationPicker.files[0];
+        destinationPathInput.value = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : file.name;
       }
     });
   </script>
