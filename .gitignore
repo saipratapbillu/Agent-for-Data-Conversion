@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+*.wheel
+venv/
+.venv/
+ENV/
+env/
+.env
+.pytest_cache/
+.tox/
+build/
+dist/
+*.manifest
+*.spec
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# OneDrive
+~$*
+
+# Service account / secrets
+service_account_example.json
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dylib
+
+# Packaging
+pip-log.txt
+pip-delete-this-directory.txt
+
+# mypy
+.mypy_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
